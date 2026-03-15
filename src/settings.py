@@ -19,5 +19,6 @@ class TrainingSettings:
     batch_size: int = 32
     epochs: int = 25
     learning_rate: float = 0.001
+    patience: int = 5
     mean: tuple[float, float, float] = (0.4377, 0.4438, 0.4728)
     std: tuple[float, float, float] = (0.1980, 0.2010, 0.1970)

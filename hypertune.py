@@ -25,10 +25,14 @@ else:
 logger.info(f"Using device: {device}")
 model = model.to(device)
 
+best_train_loss = float("inf")
+best_test_loss = float("inf")
+patience_counter = 0
+
 for epoch in range(train_settings.epochs):
     total_train_loss = 0
     total_test_loss = 0
-
+    
     model.train()
     for x, y in train_loader:
         x = x.to(device)
@@ -55,4 +59,16 @@ for epoch in range(train_settings.epochs):
     avg_train_loss = total_train_loss / len(train_loader)
     avg_test_loss = total_test_loss / len(test_loader)
     logger.info(f"Epoch: {epoch} / {train_settings.epochs}: train loss: {avg_train_loss:.4f}: test loss: {avg_test_loss:.4f}")
-   
+
+    # early stopping
+    if avg_test_loss < best_test_loss:
+        best_test_loss = avg_test_loss
+        patience_counter = 0
+    else:
+        logger.info("Increasing patience counter")
+        patience_counter += 1
+
+    if patience_counter >= train_settings.patience:
+        logger.info(f"Stopping early at epoch: {epoch}")
+        logger.info(f"Best test loss : {best_test_loss:.4f}")
+        break
