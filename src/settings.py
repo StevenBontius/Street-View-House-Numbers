@@ -12,6 +12,8 @@ class ModelSettings:
     padding: int = 1
     max_pool_kernel: int = 2
     img_size: int = 32
+    drop_out: float = 0.0
+    batch_norm: bool = False
 
 
 @dataclass
@@ -19,6 +21,6 @@ class TrainingSettings:
     batch_size: int = 32
     epochs: int = 25
     learning_rate: float = 0.001
-    patience: int = 5
+    patience: int = 2
     mean: tuple[float, float, float] = (0.4377, 0.4438, 0.4728)
     std: tuple[float, float, float] = (0.1980, 0.2010, 0.1970)
