@@ -10,14 +10,17 @@ class SimpleConvModel(nn.Module):
         out_channels = settings.num_filters
 
         for _ in range(settings.num_layers):
-            layers += [
+            layers.append(
                 nn.Conv2d(in_channels=in_channels,
                           out_channels=out_channels,
                           kernel_size=settings.kernel_size,
                           padding=settings.padding),
-                nn.ReLU(),
-                nn.MaxPool2d(kernel_size=settings.max_pool_kernel)
-            ]
+            )
+            if settings.batch_norm:
+                layers.append(nn.BatchNorm2d(out_channels))
+            layers.append(nn.ReLU())
+            layers.append(nn.MaxPool2d(kernel_size=settings.max_pool_kernel))
+
             in_channels = out_channels
             out_channels *= 2
 
@@ -33,6 +36,7 @@ class SimpleConvModel(nn.Module):
                 out_features=settings.num_hidden_units
             ),
             nn.ReLU(),
+            nn.Dropout(p=settings.drop_out),
             nn.Linear(
                 in_features=settings.num_hidden_units,
                 out_features=settings.num_classes

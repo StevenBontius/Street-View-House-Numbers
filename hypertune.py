@@ -15,8 +15,9 @@ from pathlib import Path
 import ray
 from ray import tune
 from ray.tune import CLIReporter
+from ray.tune.search.optuna import OptunaSearch
 
-NUM_SAMPLES = 20
+NUM_SAMPLES = 25
 
 
 def train_epoch(
@@ -96,11 +97,13 @@ def test_epoch(
 def train(config: dict[str, Any]) -> None:
     if ray.is_initialized():
         logger.disable("")
-        
+
     model_settings = ModelSettings(
         num_layers=config["num_layers"],
         num_filters=config["num_filters"],
         num_hidden_units=config["num_hidden_units"],
+        batch_norm=config["batch_norm"],
+        drop_out=config["drop_out"],
     )
     train_settings = TrainingSettings(
         batch_size=config["batch_size"],
@@ -172,19 +175,23 @@ if __name__ == "__main__":
     logger.info(f"Ray tune directory: {tune_dir}")
 
     config = {
-        "num_layers": tune.choice([2, 3, 4]),
-        "num_filters": tune.choice([16, 32, 64, 128]),
-        "num_hidden_units": tune.choice([64, 128, 256, 512]),
+        "num_layers": 3,
+        "num_filters": 32,
+        "num_hidden_units": 128,
         "batch_size": 32,
         "learning_rate": 0.001,
+        "batch_norm": tune.choice([True, False]),
+        "drop_out": tune.uniform(0.0, 0.5),
     }
+
+    optuna_search = OptunaSearch()
 
     tuner = tune.Tuner(
         train,
         param_space=config,
         run_config=ray.air.RunConfig(
             storage_path=str(tune_dir),
-            name="svhn_experiment",
+            name="svhn_experiment_3",
             progress_reporter=CLIReporter(
                 metric_columns=["train_loss", "test_loss", "test_accuracy"]
             ),
@@ -193,6 +200,7 @@ if __name__ == "__main__":
             num_samples=NUM_SAMPLES,
             metric="test_loss",
             mode="min",
+            search_alg=optuna_search,
         ),
     )
 
@@ -201,6 +209,6 @@ if __name__ == "__main__":
     df = results.get_dataframe()
     logger.info(f"Results shape: {df.shape}")
     logger.info(f"Columns: {df.columns.tolist()}")
-    df.to_csv("logs/results.csv", index=False)
+    df.to_csv("logs/results_3.csv", index=False)
 
     ray.shutdown()
